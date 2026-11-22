@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ServiceNow Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .ticket-card {
+            transition: all 0.3s ease;
+        }
+        .ticket-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .workload-bar {
+            height: 20px;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        .sla-critical {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
+            <div class="flex items-center">
+                <i data-feather="activity" class="text-blue-600 mr-2"></i>
+                <h1 class="text-xl font-bold text-gray-900">ServiceNow Dashboard</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="relative">
+                    <input type="text" placeholder="Search tickets..." class="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <i data-feather="search" class="absolute left-3 top-2.5 text-gray-400"></i>
+                </div>
+                <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center">
+                    <i data-feather="refresh-cw" class="mr-2"></i>
+                    Refresh
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+        <!-- Tab Navigation -->
+        <div class="border-b border-gray-200 mb-6">
+            <nav class="-mb-px flex space-x-8">
+                <button id="incidents-tab" class="tab-button active whitespace-nowrap py-4 px-1 border-b-2 border-blue-500 font-medium text-sm text-blue-600">
+                    Incidents
+                </button>
+                <button id="requests-tab" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                    Requests
+                </button>
+                <button id="changes-tab" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                    Change Requests
+                </button>
+                <button id="workload-tab" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                    Workload Overview
+                </button>
+                <button id="trends-tab" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                    Trending Analytics
+                </button>
+            </nav>
+        </div>
+
+        <!-- Tab Content -->
+        <div id="tab-content">
+            <!-- Stats Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-lg shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500">Open Incidents</p>
+                        <h3 class="text-3xl font-bold">124</h3>
+                    </div>
+                    <div class="p-3 rounded-full bg-red-100 text-red-600">
+                        <i data-feather="alert-circle"></i>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-500">Critical: 12</span>
+                        <span class="text-gray-500">High: 24</span>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500">Open Requests</p>
+                        <h3 class="text-3xl font-bold">87</h3>
+                    </div>
+                    <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                        <i data-feather="file-text"></i>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-500">Pending: 32</span>
+                        <span class="text-gray-500">In Progress: 55</span>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500">Change Requests</p>
+                        <h3 class="text-3xl font-bold">42</h3>
+                    </div>
+                    <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                        <i data-feather="clipboard"></i>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-500">Scheduled: 15</span>
+                        <span class="text-gray-500">In Progress: 27</span>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500">SLA Compliance</p>
+                        <h3 class="text-3xl font-bold">92%</h3>
+                    </div>
+                    <div class="p-3 rounded-full bg-green-100 text-green-600">
+                        <i data-feather="check-circle"></i>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-green-500">Met: 92%</span>
+                        <span class="text-red-500">Breached: 8%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Product Filter Tabs -->
+        <div class="mb-6">
+            <div class="flex overflow-x-auto pb-2">
+                <button class="product-filter px-4 py-2 mr-2 bg-blue-600 text-white rounded-lg" data-product="all">All Products</button>
+                <button class="product-filter px-4 py-2 mr-2 bg-white border rounded-lg hover:bg-gray-50" data-product="powerstore">PowerStore</button>
+                <button class="product-filter px-4 py-2 mr-2 bg-white border rounded-lg hover:bg-gray-50" data-product="powermax">PowerMax</button>
+                <button class="product-filter px-4 py-2 mr-2 bg-white border rounded-lg hover:bg-gray-50" data-product="unityxt">Unity XT</button>
+                <button class="product-filter px-4 py-2 mr-2 bg-white border rounded-lg hover:bg-gray-50" data-product="vxrail">VxRail</button>
+                <button class="product-filter px-4 py-2 mr-2 bg-white border rounded-lg hover:bg-gray-50" data-product="powerflex">PowerFlex</button>
+                <button class="product-filter px-4 py-2 bg-white border rounded-lg hover:bg-gray-50" data-product="other">Other</button>
+            </div>
+        </div>
+
+        <!-- Main Dashboard Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Tickets List -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <div class="px-6 py-4 border-b flex justify-between items-center">
+                        <h2 class="text-lg font-semibold">Recent Tickets</h2>
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1 text-sm bg-gray-100 rounded hover:bg-gray-200">Incidents</button>
+                            <button class="px-3 py-1 text-sm bg-gray-100 rounded hover:bg-gray-200">Requests</button>
+                            <button class="px-3 py-1 text-sm bg-gray-100 rounded hover:bg-gray-200">Changes</button>
+                        </div>
+                    </div>
+                    <div class="divide-y">
+                        <!-- Ticket Item -->
+                        <div class="p-6 ticket-card hover:bg-gray-50 cursor-pointer sla-critical">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <div class="flex items-center">
+                                        <span class="font-medium text-gray-900">INC0012345</span>
+                                        <span class="ml-2 px-2 py-0.5 text-xs rounded-full bg-red-100 text-red-800">Critical</span>
+                                        <span class="ml-2 px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-800">PowerStore</span>
+                                    </div>
+                                    <h3 class="mt-1 text-lg font-medium">Storage array performance degradation</h3>
+                                    <p class="mt-1 text-gray-600">Customer reporting slow response times on PowerStore 5000X array...</p>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-sm text-gray-500">Created: 2h ago</div>
+                                    <div class="mt-1 text-sm font-medium text-red-600">SLA: 1h remaining</div>
+                                    <div class="mt-1 flex items-center justify-end">
+                                        <div class="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs">JD</div>
+                                        <span class="ml-1 text-sm">John Doe</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-3 pt-3 border-t flex justify-between items-center">
+                                <div class="text-sm text-gray-500">
+                                    <span>Last update: 30m ago by System</span>
+                                </div>
+                                <button class="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center">
+                                    View details <i data-feather="chevron-right" class="ml-1 w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Ticket Item -->
+                        <div class="p-6 ticket-card hover:bg-gray-50 cursor-pointer">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <div class="flex items-center">
+                                        <span class="font-medium text-gray-900">REQ0056789</span>
+                                        <span class="ml-2 px-2 py-0.5 text-xs rounded-full bg-yellow-100 text-yellow-800">Medium</span>
+                                        <span class="ml-2 px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-800">PowerMax</span>
+                                    </div>
+                                    <h3 class="mt-1 text-lg font-medium">New volume provisioning request</h3>
+                                    <p class="mt-1 text-gray-600">Customer needs 10TB volume added to existing PowerMax 2000...</p>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-sm text-gray-500">Created: 1d ago</div>
+                                    <div class="mt-1 text-sm font-medium text-green-600">SLA: 2d remaining</div>
+                                    <div class="mt-1 flex items-center justify-end">
+                                        <div class="w-6 h-6 rounded-full bg-purple-500 flex items-center justify-center text-white text-xs">AS</div>
+                                        <span class="ml-1 text-sm">Alice Smith</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-3 pt-3 border-t flex justify-between items-center">
+                                <div class="text-sm text-gray-500">
+                                    <span>Last update: 2h ago by Alice Smith</span>
+                                </div>
+                                <button class="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center">
+                                    View details <i data-feather="chevron-right" class="ml-1 w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Ticket Item -->
+                        <div class="p-6 ticket-card hover:bg-gray-50 cursor-pointer">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <div class="flex items-center">
+                                        <span class="font-medium text-gray-900">CHG0034567</span>
+                                        <span class="ml-2 px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800">Scheduled</span>
+                                        <span class="ml-2 px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-800">Unity XT</span>
+                                    </div>
+                                    <h3 class="mt-1 text-lg font-medium">Firmware upgrade for Unity XT 880F</h3>
+                                    <p class="mt-1 text-gray-600">Planned maintenance to upgrade Unity XT to version 5.2...</p>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-sm text-gray-500">Scheduled: Tomorrow</div>
+                                    <div class="mt-1 text-sm font-medium text-gray-600">Approved</div>
+                                    <div class="mt-1 flex items-center justify-end">
+                                        <div class="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white text-xs">MB</div>
+                                        <span class="ml-1 text-sm">Mike Brown</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-3 pt-3 border-t flex justify-between items-center">
+                                <div class="text-sm text-gray-500">
+                                    <span>Last update: 5h ago by Change Manager</span>
+                                </div>
+                                <button class="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center">
+                                    View details <i data-feather="chevron-right" class="ml-1 w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="px-6 py-4 border-t flex justify-between items-center">
+                        <button class="text-blue-600 hover:text-blue-800 font-medium flex items-center">
+                            View all tickets <i data-feather="chevron-right" class="ml-1 w-4 h-4"></i>
+                        </button>
+                        <div class="text-sm text-gray-500">Showing 3 of 253</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Sidebar -->
+            <div class="space-y-6">
+                <!-- Workload Distribution -->
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <div class="px-6 py-4 border-b">
+                        <h2 class="text-lg font-semibold">Technician Workload</h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="space-y-4">
+                            <!-- Technician Item -->
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span class="font-medium">John Doe</span>
+                                    <span class="text-sm text-gray-500">8 tickets</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                    <div class="bg-red-600 h-2.5 rounded-full" style="width: 80%"></div>
+                                </div>
+                                <div class="mt-1 text-xs text-red-600">High workload - avoid assignment</div>
+                            </div>
+                            
+                            <!-- Technician Item -->
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span class="font-medium">Alice Smith</span>
+                                    <span class="text-sm text-gray-500">5 tickets</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                    <div class="bg-yellow-400 h-2.5 rounded-full" style="width: 50%"></div>
+                                </div>
+                                <div class="mt-1 text-xs text-yellow-600">Moderate workload - assign with caution</div>
+                            </div>
+                            
+                            <!-- Technician Item -->
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span class="font-medium">Mike Brown</span>
+                                    <span class="text-sm text-gray-500">2 tickets</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                    <div class="bg-green-500 h-2.5 rounded-full" style="width: 20%"></div>
+                                </div>
+                                <div class="mt-1 text-xs text-green-600">Low workload - ideal for assignment</div>
+                            </div>
+                            
+                            <!-- Technician Item -->
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span class="font-medium">Sarah Johnson</span>
+                                    <span class="text-sm text-gray-500">3 tickets</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                    <div class="bg-green-500 h-2.5 rounded-full" style="width: 30%"></div>
+                                </div>
+                                <div class="mt-1 text-xs text-green-600">Low workload - ideal for assignment</div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0">
+                                    <i data-feather="info" class="text-blue-500"></i>
+                                </div>
+                                <div class="ml-3">
+                                    <h3 class="text-sm font-medium text-blue-800">Assignment Recommendation</h3>
+                                    <div class="mt-1 text-sm text-blue-700">
+                                        <p>Next ticket should be assigned to <span class="font-semibold">Mike Brown</span> or <span class="font-semibold">Sarah Johnson</span> based on current workload.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SLA Trends Chart -->
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <div class="px-6 py-4 border-b">
+                        <h2 class="text-lg font-semibold">SLA Compliance Trends</h2>
+                    </div>
+                    <div class="p-6">
+                        <canvas id="slaChart" height="200"></canvas>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <div class="px-6 py-4 border-b">
+                        <h2 class="text-lg font-semibold">Quick Actions</h2>
+                    </div>
+                    <div class="p-6 grid grid-cols-2 gap-4">
+                        <button class="flex flex-col items-center justify-center p-4 border rounded-lg hover:bg-gray-50">
+                            <div class="p-3 rounded-full bg-blue-100 text-blue-600 mb-2">
+                                <i data-feather="plus"></i>
+                            </div>
+                            <span class="text-sm font-medium">New Ticket</span>
+                        </button>
+                        <button class="flex flex-col items-center justify-center p-4 border rounded-lg hover:bg-gray-50">
+                            <div class="p-3 rounded-full bg-green-100 text-green-600 mb-2">
+                                <i data-feather="download"></i>
+                            </div>
+                            <span class="text-sm font-medium">Export Data</span>
+                        </button>
+                        <button class="flex flex-col items-center justify-center p-4 border rounded-lg hover:bg-gray-50">
+                            <div class="p-3 rounded-full bg-purple-100 text-purple-600 mb-2">
+                                <i data-feather="filter"></i>
+                            </div>
+                            <span class="text-sm font-medium">Advanced Filter</span>
+                        </button>
+                        <button class="flex flex-col items-center justify-center p-4 border rounded-lg hover:bg-gray-50">
+                            <div class="p-3 rounded-full bg-yellow-100 text-yellow-600 mb-2">
+                                <i data-feather="settings"></i>
+                            </div>
+                            <span class="text-sm font-medium">Settings</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Initialize AOS
+        AOS.init();
+        
+        // Initialize Feather Icons
+        feather.replace();
+        
+        // Tab Switching Logic
+        const tabs = document.querySelectorAll('.tab-button');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs
+                tabs.forEach(t => {
+                    t.classList.remove('border-blue-500', 'text-blue-600');
+                    t.classList.add('border-transparent', 'text-gray-500');
+                });
+                
+                // Add active class to clicked tab
+                tab.classList.add('border-blue-500', 'text-blue-600');
+                tab.classList.remove('border-transparent', 'text-gray-500');
+                
+                // TODO: Implement tab content switching
+                console.log(`Switched to ${tab.id.replace('-tab', '')} tab`);
+            });
+        });
+
+        // Product Filter Logic
+        const productFilters = document.querySelectorAll('.product-filter');
+        productFilters.forEach(filter => {
+            filter.addEventListener('click', () => {
+                const product = filter.dataset.product;
+                
+                // Remove active class from all filters
+                productFilters.forEach(f => {
+                    f.classList.remove('bg-blue-600', 'text-white');
+                    f.classList.add('bg-white', 'border', 'hover:bg-gray-50');
+                });
+                
+                // Add active class to clicked filter
+                filter.classList.add('bg-blue-600', 'text-white');
+                filter.classList.remove('bg-white', 'border', 'hover:bg-gray-50');
+                
+                // TODO: Filter tickets by product type
+                console.log(`Filtering by product: ${product}`);
+            });
+        });
+
+        // Ticket Click Handler
+        document.querySelectorAll('.ticket-card').forEach(card => {
+            card.addEventListener('click', () => {
+                // TODO: Show ticket details modal
+                console.log('Ticket clicked - would show details modal');
+            });
+        });
+
+        // Initialize Charts
+        const slaCtx = document.getElementById('slaChart').getContext('2d');
+        const slaChart = new Chart(slaCtx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+                datasets: [
+                    {
+                        label: 'SLA Compliance %',
+                        data: [89, 91, 93, 95, 94, 92, 93],
+                        borderColor: '#3B82F6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.05)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Breached Tickets',
+                        data: [11, 9, 7, 5, 6, 8, 7],
+                        borderColor: '#EF4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.05)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        min: 80,
+                        max: 100
+                    }
+                }
+            }
+        });
+
+        // Initialize Workload Chart
+        const workloadCtx = document.createElement('canvas');
+        workloadCtx.height = 300;
+        document.querySelector('#workload-tab-content').appendChild(workloadCtx);
+        
+        const workloadChart = new Chart(workloadCtx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: ['John Doe', 'Alice Smith', 'Mike Brown', 'Sarah Johnson'],
+                datasets: [{
+                    label: 'Active Tickets',
+                    data: [8, 5, 2, 3],
+                    backgroundColor: [
+                        'rgba(239, 68, 68, 0.7)',
+                        'rgba(234, 179, 8, 0.7)',
+                        'rgba(16, 185, 129, 0.7)',
+                        'rgba(16, 185, 129, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(239, 68, 68, 1)',
+                        'rgba(234, 179, 8, 1)',
+                        'rgba(16, 185, 129, 1)',
+                        'rgba(16, 185, 129, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.parsed.x} active tickets`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Simulate Assign Next Ticket
+        document.querySelectorAll('.assign-ticket').forEach(btn => {
+            btn.addEventListener('click', () => {
+                // TODO: Implement assignment logic
+                alert('Simulating ticket assignment to next available technician');
+            });
+        });
+    </script>
+</body>
+</html>
